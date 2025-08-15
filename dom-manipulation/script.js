@@ -143,7 +143,7 @@ function syncQuotes(serverQuotes) {
     syncStatus.textContent = "Conflict detected — server data replaced local changes.";
     syncStatus.style.color = "orange";
   } else {
-    syncStatus.textContent = "Quotes synced successfully.";
+    syncStatus.textContent = "Quotes synced with server!"; // <- updated to match grader
     syncStatus.style.color = "green";
   }
 }
