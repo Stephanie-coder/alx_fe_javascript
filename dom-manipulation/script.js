@@ -38,8 +38,8 @@ populateCategories();
 
 // Show random quote
 function showRandomQuote() {
-  const selectedCategory = categorySelect.value;
-  const filteredQuotes = quotes.filter(q => q.category === selectedCategory);
+  const selectedCategory = categoryFilter.value;
+  filteredQuotes = selectedCategory === "all" ? quotes : quotes.filter(q => q.category === selectedCategory);
 
   if (filteredQuotes.length === 0) {
     quoteDisplay.textContent = "No quotes available for this category.";
@@ -47,16 +47,75 @@ function showRandomQuote() {
   }
 
   const randomQuote = filteredQuotes[Math.floor(Math.random() * filteredQuotes.length)];
-  quoteDisplay.textContent = "${randomQuote.text}" — ${randomQuote.category};
+  quoteDisplay.textContent = `"${randomQuote.text}" — ${randomQuote.category}`;
   sessionStorage.setItem("lastViewedQuote", JSON.stringify(randomQuote));
+}
+newQuoteBtn.addEventListener('click', showRandomQuote);
 
 // Filter quotes by category
 function filterQuotes() {
   const selectedCategory = categoryFilter.value;
   filteredQuotes = selectedCategory === "all" ? quotes : quotes.filter(q => q.category === selectedCategory);
-  showNewQuote();
+  showRandomQuote();
 }
 window.filterQuotes = filterQuotes;
+
+// Create the Add Quote form
+function createAddQuoteForm() {
+  const formDiv = document.createElement("div");
+  formDiv.className = "form";
+
+  const newQuoteTextInput = document.createElement("input");
+  newQuoteTextInput.type = "text";
+  newQuoteTextInput.placeholder = "Enter a new quote";
+
+  const newQuoteCategoryInput = document.createElement("input");
+  newQuoteCategoryInput.type = "text";
+  newQuoteCategoryInput.placeholder = "Enter quote category";
+
+  const addQuoteBtn = document.createElement("button");
+  addQuoteBtn.textContent = "Add Quote";
+
+  addQuoteBtn.addEventListener("click", function () {
+    addQuote(newQuoteTextInput, newQuoteCategoryInput);
+  });
+
+  formDiv.append(newQuoteTextInput, newQuoteCategoryInput, addQuoteBtn);
+  document.body.appendChild(formDiv);
+}
+
+// Add new quote
+function addQuote(textInput, categoryInput) {
+  const text = textInput.value.trim();
+  const category = categoryInput.value.trim();
+
+  if (!text || !category) {
+    alert("Please enter both a quote and a category!");
+    return;
+  }
+
+  quotes.push({ text, category });
+  localStorage.setItem('quotes', JSON.stringify(quotes));
+
+  textInput.value = "";
+  categoryInput.value = "";
+
+  populateCategories();
+  showRandomQuote();
+  postQuotesToServer({ text, category }); // Optional: post new quote to server
+}
+
+// Initialize form
+createAddQuoteForm();
+
+// Restore last viewed quote on load
+(function restoreLastViewedQuote() {
+  const last = sessionStorage.getItem("lastViewedQuote");
+  if (last) {
+    const parsed = JSON.parse(last);
+    quoteDisplay.textContent = `"${parsed.text}" — ${parsed.category}`;
+  }
+})();
 
 // Export quotes
 function exportToJsonFile() {
@@ -82,7 +141,7 @@ function importFromJsonFile(event) {
         localStorage.setItem('quotes', JSON.stringify(quotes));
         syncStatus.textContent = "Quotes imported successfully.";
         populateCategories();
-        showNewQuote();
+        showRandomQuote();
       } else {
         throw new Error("Invalid JSON format");
       }
@@ -98,7 +157,7 @@ window.importFromJsonFile = importFromJsonFile;
 // Task 3: Server Sync + Conflict
 // =============================
 
-// Fetch quotes from server (required name for check)
+// Fetch quotes from server
 async function fetchQuotesFromServer() {
   try {
     const response = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=5");
@@ -139,14 +198,14 @@ function syncQuotes(serverQuotes) {
     filteredQuotes = [...quotes];
     localStorage.setItem('quotes', JSON.stringify(quotes));
     populateCategories();
-    showNewQuote();
+    showRandomQuote();
   }
 
   if (conflictDetected) {
     syncStatus.textContent = "Conflict detected — server data replaced local changes.";
     syncStatus.style.color = "orange";
   } else {
-    syncStatus.textContent = "Quotes synced with server!"; // <- updated to match grader
+    syncStatus.textContent = "Quotes synced with server!";
     syncStatus.style.color = "green";
   }
 }
@@ -155,4 +214,5 @@ function syncQuotes(serverQuotes) {
 setInterval(fetchQuotesFromServer, 30000);
 
 // Initial load
-showNewQuote();
+showRandomQuote();
+
