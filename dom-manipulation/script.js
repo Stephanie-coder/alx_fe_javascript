@@ -37,15 +37,18 @@ function populateCategories() {
 populateCategories();
 
 // Show random quote
-function showNewQuote() {
+function showRandomQuote() {
+  const selectedCategory = categorySelect.value;
+  const filteredQuotes = quotes.filter(q => q.category === selectedCategory);
+
   if (filteredQuotes.length === 0) {
     quoteDisplay.textContent = "No quotes available for this category.";
     return;
   }
-  const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
-  quoteDisplay.textContent = `"${filteredQuotes[randomIndex].text}"`;
-}
-newQuoteBtn.addEventListener('click', showNewQuote);
+
+  const randomQuote = filteredQuotes[Math.floor(Math.random() * filteredQuotes.length)];
+  quoteDisplay.textContent = "${randomQuote.text}" — ${randomQuote.category};
+  sessionStorage.setItem("lastViewedQuote", JSON.stringify(randomQuote));
 
 // Filter quotes by category
 function filterQuotes() {
